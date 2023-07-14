@@ -28,8 +28,9 @@ export default class TopView extends JetView {
 			url: {
 				$proxy: true,
 				load: function (view, params) {
-					return ajax.get(mainScreenId, `odata/User('${user.getUsername()}')?$expand=Menus&$select=Menus`, null, function (text, data, xhr) {
-						var menu = Array.from(data.json().menus).map(x => { x.id = x.menuId; return x ;});
+					return ajax.get(mainScreenId, `odata/User('${user.getUser().username}')?$expand=Menus&$select=Menus`, null, function (text, data, xhr) {
+						var menu = Array.from(data.json().menus).map(x => { x.id = x.menuId; return x; });
+						menu.sort((a, b) => a.order - b.order)
 						view.parse(menu)
 					})
 				}
@@ -53,9 +54,129 @@ export default class TopView extends JetView {
 			},
 			cols: [
 				{
-					view: "button",
-					type: "icon",
-					icon: "mdi mdi-account",
+					view: "menu",
+					id: "account-button",
+					template: "<div style='text-align:center'><span style='font-size:1.3em' class='#icon#'></span><p style='padding: 0;margin:0'>#value#</p></div>",
+					label: user.getUser().fullName,
+					autowidth: true,
+					data: [
+						{
+							icon: "mdi mdi-account",
+							value: user.getUser().fullName,
+							submenu: [
+								{
+									id: "changePass",
+									icon: "mdi mdi-key-change",
+									value: "Change password"
+								},
+								{
+									id: "infomation",
+									icon: "mdi mdi-clipboard-account",
+									value: "Account information",
+									click: () => {
+										let userInfor = user.getUser();
+										const windowId = "account-info-window";
+										const formid = "account-info-form"
+										const invalidMessage = "This field is required";
+										let window = {
+											view: "window",
+											id: windowId,
+											position: 'center',
+											modal: true,
+											width: 500,
+											head: "Your Account Information",
+											body: {
+												view: "form",
+												id: formid,
+												elementsConfig: {
+													labelWidth: 120
+												},
+												data: userInfor,
+												elements: [
+													{
+														view: "text",
+														name: "username",
+														readonly: true,
+														required: true,
+														label: 'Username',
+														invalidMessage: invalidMessage
+													},
+													{
+														view: "text",
+														name: "phone",
+														label: "Phone",
+														required: true,
+														invalidMessage: invalidMessage
+													},
+													{
+														view: "text",
+														name: "email",
+														label: "Email",
+														required: true,
+														invalidMessage: invalidMessage
+													},
+													{
+														view: "text",
+														name: "fullName",
+														label: "Full Name",
+														required: true,
+														invalidMessage: invalidMessage
+													},
+													{
+														cols: [
+															{
+																view: "button",
+																css: "webix_primary",
+																label: "Save",
+																click: () => {
+																	const form = $$(formid);
+																	if (!form.validate()) {
+																		return;
+																	}
+																	let formValue = form.getValues();
+																	ajax.put(windowId, "api/user/update-information", formValue, (text, data, xhr) => {
+																		webix.message("Update successfully", "success");
+																		webix.message("Your information would be correct on next login session");
+																		$$(windowId).close();
+																	})
+																}
+															},
+															{
+																view: "button",
+																css: "webix_danger",
+																label: 'Cancel',
+																click: () => {
+																	$$(windowId).close();
+																}
+															}
+														]
+													}
+												]
+											}
+										}
+										$$("account-button").$scope.ui(window).show();
+									}
+								},
+								{
+									id: "logout",
+									icon: 'mdi mdi-logout',
+									value: "Log out",
+									click: () => {
+										user.logout();
+										window.location.reload();
+									}
+								}
+							]
+						}
+					],
+					on: {
+						onMenuItemClick: (id) => {
+							let item = $$("account-button").getMenuItem(id);
+							if (item.click) {
+								item.click();
+							}
+						}
+					}
 				}
 			]
 		}

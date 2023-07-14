@@ -1,3 +1,24 @@
 export default {
-    view: "datatable"
+    rows: [
+        {
+            cols: [
+                {
+
+                },
+                {
+
+                }
+            ]
+        },
+        {
+            cols: [
+                {
+
+                },
+                {
+
+                }
+            ]
+        }
+    ]
 }

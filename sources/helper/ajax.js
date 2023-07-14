@@ -4,11 +4,11 @@ let buildUrl = (uri) => {
     let url = String(host);
     if (String(uri).startsWith('/')) url = `${url}${uri}`;
     else url = `${url}/${uri}`;
-    console.log(url);
     return url;
 }
 webix.attachEvent("onBeforeAjax", function (mode, url, params, x, headers, files, defer) {
-    headers["Authorization"] = `${import.meta.env.VITE_AUTH_SCHEME} ${webix.storage.local.get(import.meta.env.VITE_TOKEN_KEY)}`
+    headers["Authorization"] = `${import.meta.env.VITE_AUTH_SCHEME} ${webix.storage.local.get(import.meta.env.VITE_USER)?.token}`
+    headers["Content-type"] = "application/json"
 });
 
 webix.attachEvent("onAjaxError", function (xhr) {
@@ -31,7 +31,7 @@ const callback = (viewId, successCallback, errorCallback) => ({
     }
 });
 const enableLoading = (viewId) => {
-    if(!viewId) return;
+    if (!viewId) return;
     webix.extend($$(viewId), webix.ProgressBar);
     $$(viewId).disable();
     $$(viewId).showProgress({
@@ -39,7 +39,7 @@ const enableLoading = (viewId) => {
     })
 }
 const disableLoading = (viewId) => {
-    if(!viewId) return;
+    if (!viewId) return;
     $$(viewId).enable();
     $$(viewId).hideProgress();
 }
@@ -51,22 +51,26 @@ export default {
     },
     post: (viewId, uri, data, successCallback, errorCallback) => {
         enableLoading(viewId);
-        ajax.post(buildUrl(uri), data, callback(viewId,successCallback, errorCallback));
+        ajax.post(buildUrl(uri), data, callback(viewId, successCallback, errorCallback));
     },
     put: (viewId, uri, data, successCallback, errorCallback) => {
         enableLoading(viewId);
-        ajax.put(buildUrl(uri), data, callback(viewId,successCallback, errorCallback));
+        ajax.put(buildUrl(uri), data, callback(viewId, successCallback, errorCallback));
     },
-    delete: (viewId, uri, data, successCallback, errorCallback) => {
-        ajax.delete(buildUrl(uri), data, callback(viewId,successCallback, errorCallback));
+    del: (viewId, uri, data, successCallback, errorCallback) => {
+        enableLoading(viewId);
+        ajax.del(buildUrl(uri), data, callback(viewId, successCallback, errorCallback));
     },
     patch: (viewId, uri, data, successCallback, errorCallback) => {
         enableLoading(viewId);
-        ajax.patch(buildUrl(uri), data, callback(viewId,successCallback, errorCallback));
+        ajax.patch(buildUrl(uri), data, callback(viewId, successCallback, errorCallback));
     },
     download: (viewId, uri, data, successCallback, errorCallback) => {
         enableLoading(viewId);
-        ajax.response("arraybuffer").get(buildUrl(uri), data, callback(viewId,successCallback, errorCallback));
-    }
+        ajax.response("arraybuffer").get(buildUrl(uri), data, callback(viewId, successCallback, errorCallback));
+    },
+    buildUrl: buildUrl,
+    enableLoading,
+    disableLoading
 
 }

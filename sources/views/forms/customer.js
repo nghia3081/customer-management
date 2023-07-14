@@ -1,4 +1,5 @@
 import ajax from "../../helper/ajax";
+import baseComponent from "../../models/base-control";
 export default class CustomerForm {
     customer;
     isNew;
@@ -13,35 +14,40 @@ export default class CustomerForm {
         let formElements = [
             {
                 view: "text",
-                name: "taxCode",
+                name: "TaxCode",
                 label: 'Tax Code',
                 required: true,
                 invalidMessage
             },
             {
                 view: "text",
-                name: "name",
+                name: "Name",
                 label: "Name",
                 required: true,
                 invalidMessage
             },
             {
-                view: "text",
-                name: "email",
-                label: "Email",
-                required: true,
-                invalidMessage
+                cols:
+                    [
+                        {
+                            view: "text",
+                            name: "Email",
+                            label: "Email",
+                            required: true,
+                            invalidMessage
+                        },
+                        {
+                            view: "text",
+                            name: "Phone",
+                            label: "Phone",
+                            required: true,
+                            invalidMessage
+                        }
+                    ]
             },
             {
                 view: "text",
-                name: "phone",
-                label: "Phone",
-                required: true,
-                invalidMessage
-            },
-            {
-                view: "text",
-                name: "address",
+                name: "Address",
                 label: "Address",
                 required: true,
                 invalidMessage
@@ -75,9 +81,22 @@ export default class CustomerForm {
                                 click: () => {
                                     if (!$$(formId).validate()) return;
                                     let formValue = $$(formId).getValues();
-                                    ajax.post(windowId, "api/customer", formValue, (text, data, xhr) => {
-                                        webix.message("Save customer successfully", "success");
-                                    });
+                                    delete(formValue.id);
+                                    if(Boolean(this.isNew)){
+                                        ajax.post(windowId, "api/customer", formValue, (text, data, xhr) => {
+                                            webix.message("Save customer successfully", "success");
+                                            $$(windowId).close();
+                                            baseComponent.refreshGrid("customerTableId")
+                                        });
+                                    } else {
+                                        ajax.put(windowId, "api/customer", formValue, (text, data, xhr) => {
+                                            webix.message("Update customer successfully", "success");
+                                            $$(windowId).close();
+                                            baseComponent.refreshGrid("customerTableId")
+                                        });
+                                    }
+
+                                
                                 }
                             },
                             {
