@@ -20,7 +20,11 @@ const controls = [
         click: () => {
             let selectedItem = baseComponent.getSelectedItem(gridId);
             ajax.download(gridId, `api/contract/${selectedItem.id}/print`, null, (text, data, xhr) => {
-                console.log(text);
+                var blob = new Blob([data], { type: "application/pdf" });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.target = "_blank";
+                a.click();
             })
         }
     },
@@ -49,7 +53,19 @@ const controls = [
         icon: "mdi mdi-file-sign",
         label: "Sign PDF",
         click: () => {
-
+            let selectedItem = baseComponent.getSelectedItem(gridId);
+            webix.confirm({
+                text: "Are you sure to sign this contract",
+                title: "Sign contract PDF",
+                callback: (res) => {
+                    if (!res) return;
+                    ajax.patch(gridId, `api/contract/${selectedItem.id}/sign`, null, (text, data, xhr) => {
+                        webix.message("Sign contract successfully", "success");
+                    
+                        baseComponent.refreshGrid(gridId);
+                    })
+                }
+            })
         }
     },
     {
@@ -69,6 +85,26 @@ const controls = [
                     })
                 }
             });
+        },
+    },
+    {
+        view: "button",
+        type: "icon",
+        icon: 'mdi mdi-email-arrow-right-outline',
+        label: "Send to customer",
+        click: () => {
+            let selectedItem = baseComponent.getSelectedItem(gridId);
+            webix.confirm({
+                text: "Are you sure to send this contract to customer. System will send this contract to email address that filled in customer's email field",
+                title: "Send contract to customer",
+                callback: (res) => {
+                    if (!res) return;
+                    ajax.patch(gridId, `api/contract/${selectedItem.id}/send-to-customer`, null, (text, data, xhr) => {
+                        webix.message("Send to customer successfully", "success");
+                        baseComponent.refreshGrid(gridId);
+                    })
+                }
+            })
         }
     }
 ]
@@ -257,7 +293,7 @@ const grid = {
             view.load(url);
         },
     },
-    url: baseComponent.getGridUrlConfig('api/contract')
+    url: baseComponent.getGridUrlConfig('api/contract', null, `StatusId gt 1`)
 }
 const pager = {
     view: "pager",

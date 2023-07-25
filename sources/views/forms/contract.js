@@ -1,5 +1,7 @@
 import ajax from "../../helper/ajax";
 import baseComponent from "../../models/base-control";
+const detailTableId = "contractFormDetailTable";
+
 export default class ContractForm {
     customerId;
     contract;
@@ -19,8 +21,7 @@ export default class ContractForm {
     }
     getForm() {
 
-        const detailTableId = "contractFormDetailTable";
-        const windowId = "contractWindow";
+               const windowId = "contractWindow";
         const formId = "contractForm";
         const invalidMessage = "This field can not be blank"
         let formElements = [
@@ -122,26 +123,6 @@ export default class ContractForm {
                                 item.GrandTotal -= item.GrandTotal * item.Discount / 100;
                                 $$(detailTableId).updateItem(editor.row, item);
                             },
-                            onBeforeEditStart: () => {
-                                ajax.get(detailTableId, "odata/Package", null, (text, data, xhr) => {
-                                    let table = $$(detailTableId);
-                                    const packageNameColumn = "packageName";
-                                    const packageCodeColumn = "packageCode";
-                                    let options = data.json().value;
-                                    let packageNameOption = JSON.parse(JSON.stringify(options)).map((product) => {
-                                        product.value = product.name;
-                                        product.id = product.name;
-                                        return product;
-                                    })
-                                    let packageCodeOption = options.map((product) => {
-                                        product.value = product.code;
-                                        product.id = product.code;
-                                        return product;
-                                    })
-                                    table.getColumnConfig(packageNameColumn).options = packageNameOption;
-                                    table.getColumnConfig(packageCodeColumn).options = packageCodeOption;
-                                })
-                            }
 
                         },
                         columns: [
@@ -470,5 +451,26 @@ export default class ContractForm {
                 ]
             }
         }
+    }
+    setContractFormOption() {
+        ajax.get(detailTableId, "odata/Package", null, (text, data, xhr) => {
+            console.log(data);
+            let table = $$(detailTableId);
+            const packageNameColumn = "packageName";
+            const packageCodeColumn = "packageCode";
+            let options = data.json().value;
+            let packageNameOption = JSON.parse(JSON.stringify(options)).map((product) => {
+                product.value = product.name;
+                product.id = product.name;
+                return product;
+            })
+            let packageCodeOption = options.map((product) => {
+                product.value = product.code;
+                product.id = product.code;
+                return product;
+            })
+            table.getColumnConfig(packageNameColumn).options = packageNameOption;
+            table.getColumnConfig(packageCodeColumn).options = packageCodeOption;
+        })
     }
 }

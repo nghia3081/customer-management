@@ -1,4 +1,4 @@
-import { JetView, plugins } from "webix-jet";
+import { JetApp, JetView, plugins } from "webix-jet";
 import ajax from "../helper/ajax";
 import user from "../models/user";
 const mainScreenId = import.meta.env.VITE_APP_ID;
@@ -18,20 +18,48 @@ export default class TopView extends JetView {
 			borderless: true,
 			autowidth: true,
 			select: true,
-			template: "<div style='text-align:center'><span style='font-size:1.3em' class='#icon#'></span><p style='padding: 0;margin:0'>#title#</p></div>",
+			template: "<div style='text-align:center'><span style='font-size:1.3em' class='#icon#'></span><p style='padding: 0;margin:0'>#value#</p></div>",
 			type: {
 				height: barHeight - barHeight * 10 / 100,
 				css: {
 					"text-align": "center",
 				}
 			},
+			on: {
+				onMenuItemClick: (id) => {
+					let item = $$("top:menu").getMenuItem(id);
+					$$("top:menu").$scope.show(item.id);
+				}
+			},
 			url: {
 				$proxy: true,
 				load: function (view, params) {
-					return ajax.get(mainScreenId, `odata/User('${user.getUser().username}')?$expand=Menus&$select=Menus`, null, function (text, data, xhr) {
-						var menu = Array.from(data.json().menus).map(x => { x.id = x.menuId; return x; });
-						menu.sort((a, b) => a.order - b.order)
-						view.parse(menu)
+					let parentMenuGetting = ajax.ajax.get(`${import.meta.env.VITE_SERVER}/api/menu/get-with-custom-response?$filter=parentMenuId eq null and users/any(u:u/username eq '${user.getUser().username}')`)
+					let childMenuGetting = ajax.ajax.get(`${import.meta.env.VITE_SERVER}/api/menu/get-with-custom-response?$filter=parentMenuId ne null and users/any(u:u/username eq '${user.getUser().username}')`)
+					return webix.promise.all([parentMenuGetting, childMenuGetting]).then((response) => {
+						let parentData = response[0].json().data;
+						let childData = response[1].json().data;
+						let result = parentData.map((p) => {
+							let child = childData.filter((c) => c.parentMenuId === p.menuId);
+							return {
+								id: p.menuId,
+								value: p.title,
+								tab: p.tabTitle,
+								icon: p.icon,
+								order: p.order,
+								submenu: child.length === 0 ? null : child.map((c) => {
+									return {
+										id: c.menuId,
+										value: c.title,
+										tab: c.tabTitle,
+										icon: c.icon,
+										order: c.order,
+										parentId: c.parentMenuId
+									}
+								}).sort((a, b) => a.order - b.order)
+							}
+						}).sort((a, b) => a.order - b.order)
+						view.parse(result)
 					})
 				}
 			},
@@ -67,7 +95,92 @@ export default class TopView extends JetView {
 								{
 									id: "changePass",
 									icon: "mdi mdi-key-change",
-									value: "Change password"
+									value: "Change password",
+									click: () => {
+										const windowId = "changePassWindow";
+										const formId = "changePassForm";
+										const elements = [
+											{
+												view: "text",
+												type: "password",
+												name: "currentPassword",
+												id: "currentPassword",
+												label: "Current password",
+												required: true,
+												invalidMessage: "Please type in your current password"
+											},
+											{
+												view: "text",
+												type: "password",
+												name: "newPassword",
+												id: "newPassword",
+												required: true,
+												invalidMessage: "New password can not be blank or can not same with current password",
+												label: "New password",
+												validate: (value) => {
+													return value !== $$("currentPassword").getValue();
+												}
+											},
+											{
+												view: "text",
+												type: "password",
+												name: "confirmNewPassword",
+												label: "Confirm new password",
+												required: true,
+												invalidMessage: "This field can not be blank or not match new password",
+												validate: (value) => {
+													return value === $$("newPassword").getValue();
+												}
+											},
+											{
+												cols: [
+													{
+														view: "button",
+														css: "webix_primary",
+														label: "Change password",
+														click: () => {
+															if (!$$(formId).validate()) return;
+															let formValue = $$(formId).getValues();
+															ajax.post(windowId, "api/user/change-password", formValue, (text, data, xhr) => {
+																webix.message('Change password successfully', "success");
+																$$(windowId).close();
+																setTimeout(() => {
+																	user.logout();
+																	window.location.reload();
+																}, 2000)
+															})
+														}
+													},
+													{
+														view: "button",
+														css: "webix_danger",
+														label: "Cancel",
+														click: () => {
+															$$(windowId).close();
+														}
+													}
+												]
+											}
+										]
+										const form = {
+											view: "form",
+											id: formId,
+											elementsConfig: {
+												labelWidth: 150
+											},
+											elements: elements
+										}
+										const changePassWindowForm = {
+											view: "window",
+											id: windowId,
+											modal: true,
+											position: "center",
+											head: "Change password form",
+											width: 500,
+											body: form
+										}
+										$$("account-button").$scope.ui(changePassWindowForm).show();
+									}
 								},
 								{
 									id: "infomation",

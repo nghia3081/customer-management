@@ -12,6 +12,7 @@ webix.attachEvent("onBeforeAjax", function (mode, url, params, x, headers, files
 });
 
 webix.attachEvent("onAjaxError", function (xhr) {
+    console.log(xhr);
     if (xhr.status == 401) {
         logout();
         window.location.reload();
@@ -25,9 +26,15 @@ const callback = (viewId, successCallback, errorCallback) => ({
     },
     error: (text, data, xhr) => {
         disableLoading(viewId)
+        let message = text;
+        if (xhr.responseType === "arraybuffer") {
+            message = String.fromCharCode.apply(
+                null,
+                new Uint8Array(data));
+        }
         if (errorCallback)
             errorCallback(text, data, xhr);
-        else webix.message(text, "error");
+        else webix.message(message, "error");
     }
 });
 const enableLoading = (viewId) => {
@@ -67,7 +74,7 @@ export default {
     },
     download: (viewId, uri, data, successCallback, errorCallback) => {
         enableLoading(viewId);
-        ajax.response("arraybuffer").get(buildUrl(uri), data, callback(viewId, successCallback, errorCallback));
+        webix.ajax().response("arraybuffer").get(buildUrl(uri), data, callback(viewId, successCallback, errorCallback));
     },
     buildUrl: buildUrl,
     enableLoading,

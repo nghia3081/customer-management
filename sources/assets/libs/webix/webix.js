@@ -22862,7 +22862,7 @@ window.webix || (webix = {}), webix.version = "5.2.2", webix.codebase = "./", we
             }
             if (e.dataOnly) return n;
             var l = webix.promise.defer();
-            return webix.require(webix.cdn + "/extras/xlsx.core.styles.min.js", function () {
+           
                 if (!n.length) return l.reject(f);
                 for (var t = {
                         SheetNames: [],
@@ -22891,7 +22891,7 @@ window.webix || (webix = {}), webix.version = "5.2.2", webix.codebase = "./", we
                         type: "application/xlsx"
                     });
                 e.download !== !1 && webix.html.download(y, m), l.resolve(y)
-            }), l
+            , l
         }, webix.toCSV = function (e, n) {
             n = n || {};
             var a = webix.$$(e);

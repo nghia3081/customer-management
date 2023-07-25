@@ -44,7 +44,7 @@ controls.push({
     icon: "mdi mdi-file-excel",
     label: "Export excels",
     click: () => {
-        new login().render()
+        webix.toExcel($$(gridId));
     }
 })
 const columnWidth = 200;

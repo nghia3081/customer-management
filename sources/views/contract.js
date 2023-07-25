@@ -9,7 +9,9 @@ let controls = baseComponent.getCrudButtom(
         baseComponent.refreshGrid(gridId);
     },
     () => {
-        $$(gridId).$scope.ui(new ContractForm(null, customerId, true).getForm()).show();
+        let ctForm = new ContractForm(null, customerId, true);
+        $$(gridId).$scope.ui(ctForm.getForm()).show();
+        ctForm.setContractFormOption();
     },
     () => {
         let selectedItem = baseComponent.getSelectedItem(gridId);
@@ -20,7 +22,9 @@ let controls = baseComponent.getCrudButtom(
                 cd.grandTotal -= cd.grandTotal * cd.discount / 100;
                 return cd;
             })
-            webix.ui(new ContractForm(selectedItem, customerId, false, contractDetail).getForm()).show();
+            let ctForm = new ContractForm(selectedItem, customerId, false, contractDetail);
+            webix.ui(ctForm.getForm()).show();
+            ctForm.setContractFormOption();
         })
 
 
@@ -40,6 +44,7 @@ let controls = baseComponent.getCrudButtom(
 
     })
 let customerId = null;
+
 const controls2 = [{
     view: "button",
     type: "icon",
@@ -102,7 +107,14 @@ const controls2 = [{
             icon: "mdi mdi-file-pdf-box",
             label: "Print",
             click: () => {
-
+                let selectedItem = baseComponent.getSelectedItem(gridId);
+                ajax.download(gridId, `api/contract/${selectedItem.id}/print`, null, (text, data, xhr) => {
+                    var blob = new Blob([data], { type: "application/pdf" });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.target = "_blank";
+                    a.click();
+                })
             }
         },
         {
@@ -120,6 +132,26 @@ const controls2 = [{
                             webix.message("Success", "success");
                             baseComponent.refreshGrid(gridId);
                         });
+                    }
+                })
+            }
+        },
+        {
+            view: "button",
+            type: "icon",
+            icon: 'mdi mdi-email-arrow-right-outline',
+            label: "Send to customer",
+            click: () => {
+                let selectedItem = baseComponent.getSelectedItem(gridId);
+                webix.confirm({
+                    text: "Are you sure to send this contract to customer. System will send this contract to email address that filled in customer's email field",
+                    title: "Send contract to customer",
+                    callback: (res) => {
+                        if (!res) return;
+                        ajax.patch(gridId, `api/contract/${selectedItem.id}/send-to-customer`, null, (text, data, xhr) => {
+                            webix.message("Send to customer successfully", "success");
+                            baseComponent.refreshGrid(gridId);
+                        })
                     }
                 })
             }

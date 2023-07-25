@@ -1,12 +1,12 @@
 import ajax from "../../helper/ajax";
 import baseComponent from "../../models/base-control";
-const windowId = "userWindowId";
-const formId = "userFormId";
-export default class UserForm {
-    user;
+const windowId = "menuWindowId";
+const formId = "menuFormId";
+export default class MenuForm {
+    menu;
     isNew;
-    constructor(user, isNew) {
-        this.user = user;
+    constructor(menu, isNew) {
+        this.menu = menu;
         this.isNew = isNew;
     }
     getForm() {
@@ -15,41 +15,45 @@ export default class UserForm {
         let formElements = [
             {
                 view: "text",
-                name: "username",
-                label: "Username",
+                name: "MenuId",
+                label: "Menu Id",
                 required: true,
                 invalidMessage: invalidMessage
             },
             {
                 view: "text",
-                type: "password",
-                name: "password",
-                label: "Password",
+                name: "Title",
+                label: "Menu Title",
                 required: true,
                 invalidMessage: invalidMessage,
-                readonly: !this.isNew
             },
             {
                 view: "text",
-                name: "phone",
-                label: "Phone",
+                name: "TabTitle",
+                label: "Tab Title",
+                required: true,
+                invalidMessage: invalidMessage,
+            },
+            {
+                view: "text",
+                name: "Icon",
+                label: "Icon Code",
                 required: true,
                 invalidMessage: invalidMessage
             },
             {
                 view: "text",
-                name: "email",
-                label: "Email",
+                type: "number",
+                name: "Order",
+                label: "Order",
                 required: true,
-                validate: webix.rules.isEmail,
                 invalidMessage: invalidMessage
             },
             {
-                view: "text",
-                name: "fullName",
-                label: "FullName",
-                required: true,
-                invalidMessage: invalidMessage
+                view: "combo",
+                name: "ParentMenuId",
+                id: "ParentMenuIdFormCombo",
+                label: "Parent",
             }
         ]
         let form = {
@@ -58,13 +62,13 @@ export default class UserForm {
             elementsConfig: {
                 labelWidth: 120
             },
-            data: this.user,
+            data: this.menu,
             elements: formElements
         }
         return {
             view: "window",
             id: windowId,
-            head: "User Form",
+            head: "Menu Form",
             modal: true,
             position: "center",
             width: 800,
@@ -82,16 +86,16 @@ export default class UserForm {
                                     let formValue = $$(formId).getValues();
                                     delete (formValue.id);
                                     if (Boolean(this.isNew)) {
-                                        ajax.post(windowId, "api/user", formValue, (text, data, xhr) => {
-                                            webix.message("Save user successfully", "success");
+                                        ajax.post(windowId, "api/menu", formValue, (text, data, xhr) => {
+                                            webix.message("Save menu successfully", "success");
                                             $$(windowId).close();
-                                            baseComponent.refreshGrid("manageUserGrid")
+                                            baseComponent.refreshGrid("menuSettingTree")
                                         });
                                     } else {
-                                        ajax.put(windowId, "api/user", formValue, (text, data, xhr) => {
-                                            webix.message("Update user successfully", "success");
+                                        ajax.put(windowId, "api/menu", formValue, (text, data, xhr) => {
+                                            webix.message("Update menu successfully", "success");
                                             $$(windowId).close();
-                                            baseComponent.refreshGrid("manageUserGrid")
+                                            baseComponent.refreshGrid("menuSettingTree")
                                         });
                                     }
 
@@ -112,5 +116,12 @@ export default class UserForm {
                 ]
             },
         }
+    }
+    setParentMenuIdFormCombo() {
+        ajax.get(windowId, "odata/Menu?$filter=parentMenuId eq null", null, (text, data, xhr) => {
+            let dataJson = data.json().value;
+            $$("ParentMenuIdFormCombo").define("options", dataJson.map((val) => { return { id: val.menuId, value: val.title } }));
+            $$("ParentMenuIdFormCombo").refresh();
+        })
     }
 }

@@ -9,6 +9,7 @@ function status() {
 
 }
 function login(user, pass) {
+
     return ajax.ajax.post(`${import.meta.env.VITE_SERVER}/api/user/login`, { username: user, password: pass }, function (text, data, xhr) {
         webix.storage.local.put(import.meta.env.VITE_USER, data.json());
         return webix.promise.resolve(data.json());

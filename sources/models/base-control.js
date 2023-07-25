@@ -7,6 +7,7 @@ let getCrudButtom = function (refreshFunction, createFunction, updateFunction, r
             type: "icon",
             icon: "mdi mdi-refresh",
             label: "Refresh",
+            id: "base-btn-refresh",
             click: () => {
                 refreshFunction()
             }
@@ -16,6 +17,7 @@ let getCrudButtom = function (refreshFunction, createFunction, updateFunction, r
             type: "icon",
             icon: "mdi mdi-plus",
             label: "Create",
+            id: "base-btn-create",
             click: () => {
                 createFunction()
             }
@@ -25,6 +27,7 @@ let getCrudButtom = function (refreshFunction, createFunction, updateFunction, r
             type: "icon",
             icon: "mdi mdi-pencil",
             label: "Update",
+            id: "base-btn-update",
             click: () => {
                 updateFunction()
             }
@@ -33,6 +36,7 @@ let getCrudButtom = function (refreshFunction, createFunction, updateFunction, r
             view: "button",
             type: "icon",
             icon: "mdi mdi-trash-can-outline",
+            id: "base-btn-remove",
             label: "Remove",
             click: () => {
                 removeFunction()
@@ -95,7 +99,7 @@ let getGridUrlConfig = (uri, expand, preFilter) => {
                     }
                 }
                 if (filterQuery.length > 0)
-                    query.$filter += filterQuery.join(' and ');
+                    query.$filter = query.$filter ? query.$filter + filterQuery.join(' and ') : filterQuery.join(' and ');
             }
             for (var propName in query) {
                 if (query[propName] === null || query[propName] === undefined) {
